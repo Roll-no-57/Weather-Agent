@@ -1,0 +1,10 @@
+colorama==0.4.6
+Flask==3.1.1
+flask_cors==6.0.0
+groq==0.25.0
+pinecone==7.0.1
+python-dotenv==1.1.0
+python_dateutil==2.9.0.post0
+Requests==2.32.3
+sentence_transformers==4.1.0
+textblob==0.19.0

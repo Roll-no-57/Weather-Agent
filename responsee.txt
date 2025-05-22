@@ -745,3 +745,134 @@ Tool result:
 
 Observations: {4: {'success': True, 'data': {'latitude': 24.25, 'longitude': 89.875, 'generationtime_ms': 0.04744529724121094, 'utc_offset_seconds': 21600, 'timezone': 'Asia/Dhaka', 'timezone_abbreviation': 'GMT+6', 'elevation': 16.0, 'current_units': {'time': 'iso8601', 'interval': 'seconds', 'weather_code': 'wmo code', 'temperature_2m': '°C'}, 'current': {'time': '2025-05-22T21:00', 'interval': 900, 'weather_code': 3, 'temperature_2m': 27.2}, 'hourly_units': {'time': 'iso8601', 'weather_code': 'wmo code', 'temperature_2m': '°C', 'precipitation_probability': '%'}, 'hourly': {'time': ['2025-05-22T00:00', '2025-05-22T01:00', '2025-05-22T02:00', '2025-05-22T03:00', '2025-05-22T04:00', '2025-05-22T05:00', '2025-05-22T06:00', '2025-05-22T07:00', '2025-05-22T08:00', '2025-05-22T09:00', '2025-05-22T10:00', '2025-05-22T11:00', '2025-05-22T12:00', '2025-05-22T13:00', '2025-05-22T14:00', '2025-05-22T15:00', '2025-05-22T16:00', '2025-05-22T17:00', '2025-05-22T18:00', '2025-05-22T19:00', '2025-05-22T20:00', '2025-05-22T21:00', '2025-05-22T22:00', '2025-05-22T23:00'], 'weather_code': [3, 3, 3, 80, 80, 80, 80, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], 'temperature_2m': [25.7, 25.6, 25.4, 25.1, 24.9, 24.7, 24.9, 25.5, 27.0, 27.1, 27.3, 28.5, 31.1, 31.6, 31.9, 31.9, 31.5, 30.9, 30.1, 28.8, 27.9, 27.2, 26.8, 26.4], 'precipitation_probability': [38, 33, 63, 80, 80, 80, 73, 25, 13, 20, 43, 40, 48, 53, 50, 48, 45, 33, 23, 13, 0, 0, 0, 0]}, 'daily_units': {'time': 'iso8601', 'weather_code': 'wmo code'}, 'daily': {'time': ['2025-05-22'], 'weather_code': [80]}}, 'location': {'latitude': 24.25, 'longitude': 89.92}, 'date_range': {'start': '2025-05-22', 'end': '2025-05-22'}}}
 🌟 Weather Agent: The weather in Tangail will be partly cloudy this evening with a temperature of around 27°C and no precipitation expected.
+
+Thought: The user is asking about the weather forecast for the day after May5. First, I need to determine the date for "the day after May5". Then, I'll get the weather forecast for that date in Dhaka.
+
+Using Tool: parse_date_time
+
+Tool call dict:
+{'name': 'parse_date_time', 'arguments': {'query': 'May 5'}, 'id': 1}
+
+Tool result:
+{'start_date': '2025-05-23', 'end_date': '2025-05-23', 'time_range': None, 'parsed_references': ['default_today']}
+
+Using Tool: calculate_date
+
+Tool call dict:
+{'name': 'calculate_date', 'arguments': {'base_date': '2025-05-05', 'days_offset': 1}, 'id': 2}
+
+Tool result:
+{'original_date': '2025-05-05', 'days_offset': 1, 'calculated_date': '2025-05-06', 'day_of_week': 'Tuesday', 'success': True}       
+
+Using Tool: get_location_coordinates        
+
+Tool call dict:
+{'name': 'get_location_coordinates', 'arguments': {'location': 'Dhaka'}, 'id': 3}       
+
+Tool result:
+{'latitude': 23.7104, 'longitude': 90.40744, 'name': 'Dhaka', 'country': 'Bangladesh', 'admin1': 'Dhaka Division', 'timezone': 'Asia/Dhaka', 'found': True}
+
+Observations: {1: {'start_date': '2025-05-23', 'end_date': '2025-05-23', 'time_range': None, 'parsed_references': ['default_today']}, 2: {'original_date': '2025-05-05', 'days_offset': 1, 'calculated_date': '2025-05-06', 'day_of_week': 'Tuesday', 'success': True}, 3: {'latitude': 23.7104, 'longitude': 90.40744, 'name': 'Dhaka', 'country': 'Bangladesh', 'admin1': 'Dhaka Division', 'timezone': 'Asia/Dhaka', 'found': True}}
+
+Thought: I now have the necessary information to answer the user's query. The date for "the day after May5" is May6,2025. I'll use the get_weather_forecast function to retrieve the weather forecast for Dhaka on that date.
+
+Using Tool: get_weather_forecast
+
+Tool call dict:
+{'name': 'get_weather_forecast', 'arguments': {'latitude': 23.7104, 'longitude': 90.40744, 'start_date': '2025-05-06', 'end_date': '2025-05-06', 'variables': 'temperature_2m_max,temperature_2m_min,precipitation_sum,weather_code', 'timezone': 'Asia/Dhaka'}, 'id': 4}
+
+Tool result:
+{'success': True, 'data': {'latitude': 23.75, 'longitude': 90.375, 'generationtime_ms': 5.658149719238281, 'utc_offset_seconds': 21600, 'timezone': 'Asia/Dhaka', 'timezone_abbreviation': 'GMT+6', 'elevation': 27.0, 'current_units': {'time': 'iso8601', 'interval': 'seconds', 'weather_code': 'wmo code'}, 'current': {'time': '2025-05-23T00:30', 'interval': 900, 'weather_code': 3}, 'hourly_units': {'time': 'iso8601', 'weather_code': 'wmo code'}, 'hourly': {'time': ['2025-05-06T00:00', '2025-05-06T01:00', '2025-05-06T02:00', '2025-05-06T03:00', '2025-05-06T04:00', '2025-05-06T05:00', '2025-05-06T06:00', '2025-05-06T07:00', '2025-05-06T08:00', '2025-05-06T09:00', '2025-05-06T10:00', '2025-05-06T11:00', '2025-05-06T12:00', '2025-05-06T13:00', '2025-05-06T14:00', '2025-05-06T15:00', '2025-05-06T16:00', '2025-05-06T17:00', '2025-05-06T18:00', '2025-05-06T19:00', '2025-05-06T20:00', '2025-05-06T21:00', '2025-05-06T22:00', '2025-05-06T23:00'], 'weather_code': [1, 80, 80, 1, 3, 3, 3, 0, 2, 2, 2, 3, 2, 2, 2, 3, 80, 3, 1, 0, 0, 0, 0, 0]}, 'daily_units': {'time': 'iso8601', 'temperature_2m_max': '°C', 'temperature_2m_min': '°C', 'precipitation_sum': 'mm', 'weather_code': 'wmo code'}, 'daily': {'time': ['2025-05-06'], 'temperature_2m_max': [33.0], 'temperature_2m_min': [25.4], 'precipitation_sum': [2.9], 'weather_code': [80]}}, 'location': {'latitude': 23.7104, 'longitude': 90.40744}, 'date_range': {'start': '2025-05-06', 'end': '2025-05-06'}} 
+
+Observations: {4: {'success': True, 'data': {'latitude': 23.75, 'longitude':{'latitude': 23.75, 'longitude': 90.375, 'generationtime_ms': 5.658149719238281, 'utc_offset_seconds': 21600, 'timezone': 'Asia/Dhaka', 'timezone_abbreviation': 'GMT+6', 'elevation': 27.0, 'current_units': {'time': 'iso8601', 'interval': 'seconds', 'weather_code': 'wmo code'}, 'current': {'time': '2025-05-23T00:30', 'interval': 900, 'weather_code': 3}, 'hourly_units': {'time': 'iso8601', 'weather_code': 'wmo code'}, 'hourly': {'time': ['2025-05-06T00:00', '2025-05-06T01:00', '2025-05-06T02:00', '2025-05-06T03:00', '2025-05-06T04:00', '2025-05-06T05:00', '2025-05-06T06:00', '2025-05-06T07:00', '2025-05-06T08:00', '2025-05-06T09:00', '2025-05-06T10:00', '2025-05-06T11:00', '2025-05-06T12:00', '2025-05-06T13:00', '2025-05-06T14:00', '2025-05-06T15:00', '2025-05-06T16:00', '2025-05-06T17:00', '2025-05-06T18:00', '2025-05-06T19:00', '2025-05-06T20:00', '2025-05-06T21:00', '2025-05-06T22:00', '2025-05-06T23:00'], 'weather_code': [1, 80, 80, 1, 3, 3, 3, 0, 2, 2, 2, 3, 2, 2, 2, 3, 80, 3, 1, 0, 0, 0, 0, 0]}, 'daily_units': {'time': 'iso8601', 'temperature_2m_max': '°C', 'temperature_2m_min': '°C', 'precipitation_sum': 'mm', 'weather_code': 'wmo code'}, 'daily': {'time': ['2025-05-06'], 'temperature_2m_max': [33.0], 'temperature_2m_min': [25.4], 'precipitation_sum': [2.9], 'weather_code': [80]}}, 'location': {'latitude': 23.7104, 'longitude': 90.40744}, 'date_range': {'start': '2025-05-06', 'end': '2025-05-06'}}}
+192.168.68.107 - - [23/May/2025 00:40:52] "POST /weather HTTP/1.1" 200 -    
+
+"response": "On May6,2025, in Dhaka, you can expect a maximum temperature of33°C and a minimum of25.4°C with slight rain showers. There's a total precipitation of2.9 mm expected.",
+
+Thought: To determine if it was raining two days before yesterday, we need to establish the current date and then calculate the date two days before yesterday. After that, we'll check the historical weather data for that date in Dhaka.
+
+Using Tool: get_current_datetime
+
+Tool call dict:
+{'name': 'get_current_datetime', 'arguments': {}, 'id': 1}      
+
+Tool result:
+{'datetime': '2025-05-23T00:43:47.564552', 'date': '2025-05-23', 'time': '00:43:47', 'day_of_week': 'Friday', 'timestamp': 1747939427.564552}
+
+Observations: {1: {'datetime': '2025-05-23T00:43:47.564552', 'date': '2025-05-23', 'time': '00:43:47', 'day_of_week': 'Friday', 'timestamp': 1747939427.564552}}
+
+Thought: Now that we have the current date (2025-05-23), we can calculate the date for "two days before yesterday". Yesterday was 2025-05-22, so two days before yesterday would be 2025-05-21. We'll now check the historical weather data for Dhaka on 2025-05-21.
+
+Using Tool: get_location_coordinates
+
+Tool call dict: 
+{'name': 'get_location_coordinates', 'arguments': {'location': 'Dhaka'}, 'id': 2}
+
+Tool result:
+{'latitude': 23.7104, 'longitude': 90.40744, 'name': 'Dhaka', 'country': 'Bangladesh', 'admin1': 'Dhaka Division', 'timezone': 'Asia/Dhaka', 'found': True}
+
+Observations: {2: {'latitude': 23.7104, 'longitude': 90.40744, 'name': 'Dhaka', 'country': 'Bangladesh', 'admin1': 'Dhaka Division', 'timezone': 'Asia/Dhaka', 'found': True}}
+
+Thought: We have the coordinates for Dhaka (latitude: 23.7104, longitude: 90.40744). Now, we'll use the get_historical_weather function to check if it was raining on 2025-05-21 in Dhaka.      
+
+Using Tool: get_historical_weather
+
+Tool call dict:
+{'name': 'get_historical_weather', 'arguments': {'latitude': 23.7104, 'longitude': 90.40744, 'start_date': '2025-05-21', 'end_date': '2025-05-21', 'variables': 'precipitation_sum,weather_code', 'timezone': 'Asia/Dhaka'}, 'id': 3}
+
+Tool result:
+{'success': True, 'data': {'latitude': 23.725834, 'longitude': 90.38015, 'generationtime_ms': 0.7982254028320312, 'utc_offset_seconds': 21600, 'timezone': 'Asia/Dhaka', 'timezone_abbreviation': 'GMT+6', 'elevation': 27.0, 'hourly_units': {'time': 'iso8601', 'weather_code': 'wmo code'}, 'hourly': {'time': ['2025-05-21T00:00', '2025-05-21T01:00', '2025-05-21T02:00', '2025-05-21T03:00', '2025-05-21T04:00', '2025-05-21T05:00', '2025-05-21T06:00', '2025-05-21T07:00', '2025-05-21T08:00', '2025-05-21T09:00', '2025-05-21T10:00', '2025-05-21T11:00', '2025-05-21T12:00', '2025-05-21T13:00', '2025-05-21T14:00', '2025-05-21T15:00', '2025-05-21T16:00', '2025-05-21T17:00', '2025-05-21T18:00', '2025-05-21T19:00', '2025-05-21T20:00', '2025-05-21T21:00', '2025-05-21T22:00', '2025-05-21T23:00'], 'weather_code': [3, 3, 3, 3, 3, 3, 3, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]}, 'daily_units': {'time': 'iso8601', 'precipitation_sum': 'mm', 'weather_code': 'wmo code'}, 'daily': {'time': ['2025-05-21'], 'precipitation_sum': [None], 'weather_code': [3]}}, 'location': {'latitude': 23.7104, 'longitude': 90.40744}, 'date_range': {'start': '2025-05-21', 'end': '2025-05-21'}}
+
+Observations: {3: {'success': True, 'data': {'latitude': 23.725834, 'longitude': 90.38015, 'generationtime_ms': 0.7982254028320312, 'utc_offset_seconds': 21600, 'timezone': 'Asia/Dhaka', 'timezone_abbreviation': 'GMT+6', 'elevation': 27.0, 'hourly_units': {'time': 'iso8601', 'weather_code': 'wmo code'}, 'hourly': {'time': ['2025-05-21T00:00', '2025-05-21T01:00', '2025-05-21T02:00', '2025-05-21T03:00', '2025-05-21T04:00', '2025-05-21T05:00', '2025-05-21T06:00', '2025-05-21T07:00', '2025-05-21T08:00', '2025-05-21T09:00', '2025-05-21T10:00', '2025-05-21T11:00', '2025-05-21T12:00', '2025-05-21T13:00', '2025-05-21T14:00', '2025-05-21T15:00', '2025-05-21T16:00', '2025-05-21T17:00', '2025-05-21T18:00', '2025-05-21T19:00', '2025-05-21T20:00', '2025-05-21T21:00', '2025-05-21T22:00', '2025-05-21T23:00'], 'weather_code': [3, 3, 3, 3, 3, 3, 3, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None]}, 'daily_units': {'time': 'iso8601', 'precipitation_sum': 'mm', 'weather_code': 'wmo code'}, 'daily': {'time': ['2025-05-21'], 'precipitation_sum': [None], 'weather_code': [3]}}, 'location': {'latitude': 23.7104, 'longitude': 90.40744}, 'date_range': {'start': '2025-05-21', 'end': '2025-05-21'}}}
+192.168.68.107 - - [23/May/2025 00:46:21] "POST /weather HTTP/1.1" 200 
+
+{
+    "response": "On May21,2025 (two days before yesterday), in Dhaka, the weather was overcast, but there was no significant precipitation recorded.",
+    "session_id": "fed70445-fd4e-43ac-b3e1-973e1d302af6"
+}
+
+
+Thought: The user is asking about the weather forecast for tomorrow, specifically if it will drizzle, and they mentioned earlier they are planning to go to the beach. I need to get the weather forecast for the user's location, which was not specified earlier, but since they asked about Dhaka earlier, I'll assume the location is still Dhaka. I'll use the get_weather_forecast tool to get the forecast for tomorrow.
+
+Using Tool: get_current_datetime
+
+Tool call dict: 
+{'name': 'get_current_datetime', 'arguments': {}, 'id': 1}
+
+Tool result:
+{'datetime': '2025-05-23T01:55:37.564694', 'date': '2025-05-23', 'time': '01:55:37', 'day_of_week': 'Friday', 'timestamp': 1747943737.564694}
+
+Using Tool: get_location_coordinates     
+
+Tool call dict:
+{'name': 'get_location_coordinates', 'arguments': {'location': 'Dhaka'}, 'id': 2} 
+
+Tool result:
+{'latitude': 23.7104, 'longitude': 90.40744, 'name': 'Dhaka', 'country': 'Bangladesh', 'admin1': 'Dhaka Division', 'timezone': 'Asia/Dhaka', 'found': True}
+
+Using Tool: parse_date_time
+
+Tool call dict:
+{'name': 'parse_date_time', 'arguments': {'query': 'tomorrow'}, 'id': 3}
+
+Tool result:
+{'start_date': '2025-05-24', 'end_date': '2025-05-24', 'time_range': None, 'parsed_references': ['tomorrow']}
+
+Observations: {1: {'datetime': '2025-05-23T01:55:37.564694', 'date': '2025-05-23', 'time': '01:55:37', 'day_of_week': 'Friday', 'timestamp': 1747943737.564694}, 2: {'latitude': 23.7104, 'longitude': 90.40744, 'name': 'Dhaka', 'country': 'Bangladesh', 'admin1': 'Dhaka Division', 'timezone': 'Asia/Dhaka', 'found': True}, 3: {'start_date': '2025-05-24', 'end_date': '2025-05-24', 'time_range': None, 'parsed_references': ['tomorrow']}}
+
+Thought: I have the current date, location coordinates for Dhaka, and the parsed date for tomorrow. Now, I can use the get_weather_forecast tool to get the forecast for tomorrow in Dhaka.
+
+Using Tool: get_weather_forecast
+
+Tool call dict:
+{'name': 'get_weather_forecast', 'arguments': {'latitude': 23.7104, 'longitude': 90.40744, 'start_date': '2025-05-24', 'end_date': '2025-05-24', 'variables': 'weather_code,precipitation_probability,precipitation_sum', 'timezone': 'auto'}, 'id': 4}
+
+Tool result:
+{'success': True, 'data': {'latitude': 23.75, 'longitude': 90.375, 'generationtime_ms': 0.06914138793945312, 'utc_offset_seconds': 21600, 'timezone': 'Asia/Dhaka', 'timezone_abbreviation': 'GMT+6', 'elevation': 27.0, 'current_units': {'time': 'iso8601', 'interval': 'seconds', 'weather_code': 'wmo code'}, 'current': {'time': '2025-05-23T01:45', 'interval': 900, 'weather_code': 3}, 'hourly_units': {'time': 'iso8601', 'weather_code': 'wmo code', 'precipitation_probability': '%'}, 'hourly': {'time': ['2025-05-24T00:00', '2025-05-24T01:00', '2025-05-24T02:00', '2025-05-24T03:00', '2025-05-24T04:00', '2025-05-24T05:00', '2025-05-24T06:00', '2025-05-24T07:00', '2025-05-24T08:00', '2025-05-24T09:00', '2025-05-24T10:00', '2025-05-24T11:00', '2025-05-24T12:00', '2025-05-24T13:00', '2025-05-24T14:00', '2025-05-24T15:00', '2025-05-24T16:00', '2025-05-24T17:00', '2025-05-24T18:00', '2025-05-24T19:00', '2025-05-24T20:00', '2025-05-24T21:00', '2025-05-24T22:00', '2025-05-24T23:00'], 'weather_code': [3, 3, 3, 80, 95, 95, 95, 95, 80, 61, 3, 80, 3, 80, 95, 96, 80, 3, 95, 80, 3, 3, 3, 3], 'precipitation_probability': [18, 25, 43, 38, 40, 58, 60, 60, 63, 55, 60, 60, 58, 50, 58, 65, 63, 50, 48, 45, 42, 40, 38, 35]}, 'daily_units': {'time': 'iso8601', 'weather_code': 'wmo code', 'precipitation_sum': 'mm'}, 'daily': {'time': ['2025-05-24'], 'weather_code': [96], 'precipitation_sum': [14.7]}}, 'location': {'latitude': 23.7104, 'longitude': 90.40744}, 'date_range': {'start': '2025-05-24', 'end': '2025-05-24'}}       
+
+Observations: {4: {'success': True, 'data': {'latitude': 23.75, 'longitude': 90.375, 'generationtime_ms': 0.06914138793945312, 'utc_offset_seconds': 21600, 'timezone': 'Asia/Dhaka', 'timezone_abbreviation': 'GMT+6', 'elevation': 27.0, 'current_units': {'time': 'iso8601', 'interval': 'seconds', 'weather_code': 'wmo code'}, 'current': {'time': '2025-05-23T01:45', 'interval': 900, 'weather_code': 3}, 'hourly_units': {'time': 'iso8601', 'weather_code': 'wmo code', 'precipitation_probability': '%'}, 'hourly': {'time': ['2025-05-24T00:00', '2025-05-24T01:00', '2025-05-24T02:00', '2025-05-24T03:00', '2025-05-24T04:00', '2025-05-24T05:00', '2025-05-24T06:00', '2025-05-24T07:00', '2025-05-24T08:00', '2025-05-24T09:00', '2025-05-24T10:00', '2025-05-24T11:00', '2025-05-24T12:00', '2025-05-24T13:00', '2025-05-24T14:00', '2025-05-24T15:00', '2025-05-24T16:00', '2025-05-24T17:00', '2025-05-24T18:00', '2025-05-24T19:00', '2025-05-24T20:00', '2025-05-24T21:00', '2025-05-24T22:00', '2025-05-24T23:00'], 'weather_code': [3, 3, 3, 80, 95, 95, 95, 95, 80, 61, 3, 80, 3, 80, 95, 96, 80, 3, 95, 80, 3, 3, 3, 3], 'precipitation_probability': [18, 25, 43, 38, 40, 58, 60, 60, 63, 55, 60, 60, 58, 50, 58, 65, 63, 50, 48, 45, 42, 40, 38, 35]}, 'daily_units': {'time': 'iso8601', 'weather_code': 'wmo code', 'precipitation_sum': 'mm'}, 'daily': {'time': ['2025-05-24'], 'weather_code': [96], 'precipitation_sum': [14.7]}}, 'location': {'latitude': 23.7104, 'longitude': 90.40744}, 'date_range': {'start': '2025-05-24', 'end': '2025-05-24'}}}
+{
+    "query": "Ugh, will it drizzle again? I hate wet shoes.",
+    "response": "Unfortunately, it's likely to drizzle tomorrow, with a high chance of precipitation and a total precipitation sum of 14.7 mm. You might want to consider bringing an umbrella or waterproof shoes to keep your feet dry. The forecast also indicates a thunderstorm with slight hail, so it's a good idea to check the weather updates regularly before heading out.",
+    "session_id": "a9f007b3-3ae9-46fa-a1d0-d7b2e389a9b1"
+}

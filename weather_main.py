@@ -64,6 +64,12 @@ class WeatherAgent:
 
             IMPORTANT: For get_weather_forecast and get_historical_weather tools, you need to specify which weather variables to retrieve in the 'variables' parameter as a comma-separated string.Another important note is that you should pass the date parameter in the format YYYY-MM-DD in function calling if year,month,day is provided from user query otherwise parse it.And also consider current year/month if year/month is not provided in the user query. 
             
+            
+            IMPORTANT :
+            - user query sentiment score will be provided so adjusts tone accordingly.
+            for example :user :“Woohoo! Will it be sunny tomorrow so I can hit the beach?”	response:“Sounds exciting! Yes, tomorrow is sunny with highs of 32°C—perfect beach weather.”
+
+            
             CRITICAL: FORECAST vs HISTORICAL DATA SELECTION:
             - Use get_weather_forecast for:
             * Current weather conditions
