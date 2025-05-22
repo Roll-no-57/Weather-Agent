@@ -209,6 +209,8 @@ This section outlines the available API endpoints for interacting with the AI-Po
 - **Context or Sentiment Issues**:
   - If context is not maintained, verify Pinecone integration and check for errors in vector storage/retrieval.
   - If sentiment analysis seems off, ensure the sentiment library (e.g., TextBlob) is properly installed and configured.
+- **Groq Token Rate Limit Problem**:
+  - For many queries, the Groq API token limit may be exhausted, leading to errors or throttled responses. To mitigate this, reduce the frequency of requests or consider upgrading to a higher-tier plan. Monitor token usage and implement rate limiting on the client side if needed.
 
 ## 📝 Notes
 
