@@ -233,4 +233,4 @@ This project is licensed under the MIT License. See the `LICENSE` file for detai
 
 ## 📬 Contact
 
-For questions or feedback, please open an issue on the GitHub repository or contact the maintainer at [your-email@example.com].
+For questions or feedback, please open an issue on the GitHub repository or contact the maintainer at [aoarish397@example.com].
