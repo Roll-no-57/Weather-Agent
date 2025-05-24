@@ -52,7 +52,7 @@ def store_session(user_id: str, query: str, response: str):
     
     return session_id
 
-def fetch_user_sessions(user_id: str, limit: int = 10):
+def fetch_user_sessions(user_id: str, limit: int = 500):
     """
     Fetch recent chat sessions for a user.
     

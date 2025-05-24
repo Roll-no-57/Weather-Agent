@@ -89,27 +89,25 @@ def calculate_date(base_date: str, days_offset: int) -> dict:
 @tool
 def parse_date_time(query: str) -> dict:
     """
-    Parses SIMPLE date and time references from natural language text.
+    Parses SIMPLE date and time references from natural language text, including partial dates with the current year.
     
-    SUPPORTED PATTERNS ONLY:
-    - "today", "now", "current", "this moment"
-    - "tomorrow", "next day" 
-    - "yesterday", "last day"
-    - "this weekend", "saturday", "sunday"
-    - Time references: "morning", "afternoon", "evening", "night"
-    - Specific times: "9 AM", "7 PM", etc.
-    - "X days ago" (e.g., "3 days ago", "5 days ago")
-    - "last week", "next week"
+    SUPPORTED PATTERNS:
+    - Simple references: "today", "now", "current", "this moment", "tomorrow", "next day", "yesterday", "last day"
+    - Week references: "this weekend", "saturday", "sunday", "last week", "next week"
+    - Days ago: "X days ago" (e.g., "3 days ago")
+    - Partial dates: "Month Day" (e.g., "May 1"), "Month Day–Day" (e.g., "May 1–3"), "Month Day to Day" (e.g., "May 1 to 3")
+    - Time references: "morning", "afternoon", "evening", "night", "9 AM", "7 PM"
     
-    NOT SUPPORTED: Complex date math, specific dates, "X days earlier", arithmetic expressions
+    NOT SUPPORTED: Complex date math, specific dates with years (e.g., "May 1, 2024"), arithmetic like "X days earlier"
     
     Args:
-        query: Simple natural language date/time reference (e.g., "tomorrow", "3 days ago", "this morning")
+        query: Natural language date/time reference (e.g., "tomorrow", "May 1–3", "3 days ago")
         
     Returns:
         dict: Parsed date and time information with start_date, end_date, time_range
     """
     now = datetime.now()
+    current_year = now.year
     result = {
         "start_date": None,
         "end_date": None,
@@ -117,7 +115,30 @@ def parse_date_time(query: str) -> dict:
         "parsed_references": []
     }
     
-    query_lower = query.lower()
+    query_lower = query.lower().strip()
+    
+    # Partial date patterns (e.g., "May 1", "May 1–3", "May 1 to 3")
+    month_names = r'(january|february|march|april|may|june|july|august|september|october|november|december)'
+    partial_date_pattern = rf'{month_names}\s+(\d{{1,2}})(?:\s*[-–to]\s*(\d{{1,2}}))?'
+    date_match = re.search(partial_date_pattern, query_lower, re.IGNORECASE)
+    
+    if date_match:
+        month_str = date_match.group(1).capitalize()
+        start_day = int(date_match.group(2))
+        end_day = int(date_match.group(3)) if date_match.group(3) else start_day
+        
+        # Convert month name to number
+        month_num = {
+            "January": "01", "February": "02", "March": "03", "April": "04",
+            "May": "05", "June": "06", "July": "07", "August": "08",
+            "September": "09", "October": "10", "November": "11", "December": "12"
+        }[month_str]
+        
+        # Format dates with current year
+        result["start_date"] = f"{current_year}-{month_num}-{start_day:02d}"
+        result["end_date"] = f"{current_year}-{month_num}-{end_day:02d}"
+        result["parsed_references"].append(f"partial_date_{month_str}_{start_day}_{end_day}")
+        return result
     
     # X days ago pattern (e.g., "3 days ago", "5 days ago")
     days_ago_match = re.search(r'(\d+)\s+days?\s+ago', query_lower)
@@ -130,46 +151,47 @@ def parse_date_time(query: str) -> dict:
         return result
     
     # Last week references
-    elif any(phrase in query_lower for phrase in ["last week", "previous week"]):
-        # Get date from 7 days ago
+    if any(phrase in query_lower for phrase in ["last week", "previous week"]):
         last_week = now - timedelta(days=7)
         result["start_date"] = last_week.strftime("%Y-%m-%d")
         result["end_date"] = last_week.strftime("%Y-%m-%d")
         result["parsed_references"].append("last_week")
+        return result
     
     # Today references
-    elif any(word in query_lower for word in ["today", "now", "current", "this moment"]):
+    if any(word in query_lower for word in ["today", "now", "current", "this moment"]):
         result["start_date"] = now.strftime("%Y-%m-%d")
         result["end_date"] = now.strftime("%Y-%m-%d")
         result["parsed_references"].append("today")
+        return result
     
     # Tomorrow references
-    elif any(word in query_lower for word in ["tomorrow", "next day"]):
+    if any(word in query_lower for word in ["tomorrow", "next day"]):
         tomorrow = now + timedelta(days=1)
         result["start_date"] = tomorrow.strftime("%Y-%m-%d")
         result["end_date"] = tomorrow.strftime("%Y-%m-%d")
         result["parsed_references"].append("tomorrow")
+        return result
     
     # Yesterday references
-    elif any(word in query_lower for word in ["yesterday", "last day"]):
+    if any(word in query_lower for word in ["yesterday", "last day"]):
         yesterday = now - timedelta(days=1)
         result["start_date"] = yesterday.strftime("%Y-%m-%d")
         result["end_date"] = yesterday.strftime("%Y-%m-%d")
         result["parsed_references"].append("yesterday")
+        return result
     
     # This week references
-    elif any(phrase in query_lower for phrase in ["this week", "weekend", "saturday", "sunday"]):
-        # For weekend planning
-        if "weekend" in query_lower or "saturday" in query_lower or "sunday" in query_lower:
-            # Find next Saturday and Sunday
-            days_ahead = 5 - now.weekday()  # Saturday is weekday 5
-            if days_ahead <= 0:
-                days_ahead += 7
-            saturday = now + timedelta(days=days_ahead)
-            sunday = saturday + timedelta(days=1)
-            result["start_date"] = saturday.strftime("%Y-%m-%d")
-            result["end_date"] = sunday.strftime("%Y-%m-%d")
-            result["parsed_references"].append("weekend")
+    if any(phrase in query_lower for phrase in ["this week", "weekend", "saturday", "sunday"]):
+        days_ahead = 5 - now.weekday()  # Saturday is weekday 5
+        if days_ahead <= 0:
+            days_ahead += 7
+        saturday = now + timedelta(days=days_ahead)
+        sunday = saturday + timedelta(days=1)
+        result["start_date"] = saturday.strftime("%Y-%m-%d")
+        result["end_date"] = sunday.strftime("%Y-%m-%d")
+        result["parsed_references"].append("weekend")
+        return result
     
     # Time-specific references
     time_patterns = {
@@ -187,7 +209,7 @@ def parse_date_time(query: str) -> dict:
             result["parsed_references"].append(f"{time_word}_time")
             break
     
-    # Specific time mentions (e.g., "9 AM", "7 AM")
+    # Specific time mentions (e.g., "9 AM", "7 PM")
     time_match = re.search(r'(\d{1,2})\s*(am|pm|AM|PM)', query)
     if time_match:
         hour = int(time_match.group(1))
@@ -305,6 +327,7 @@ def get_current_location_from_ip() -> dict:
 def get_weather_forecast(latitude: float, longitude: float, start_date: str, end_date: str, variables: str, timezone: str = "auto") -> dict:
     """
     Gets weather forecast data from Open-Meteo API.
+    **IMPORTANT**: You must use that current year if not provided in the user query.
     
     Args:
         latitude: Latitude coordinate (e.g., 23.8103 for Dhaka)

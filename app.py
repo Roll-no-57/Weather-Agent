@@ -10,7 +10,7 @@ CORS(app)  # Enable CORS for all routes (use specific origins in production)
 
 
 # Initialize the weather agent
-agent = WeatherAgent(model="llama-3.3-70b-versatile")
+agent = WeatherAgent(model="gemini-1.5-flash")
 
 @app.route('/weather', methods=['POST'])
 def weather_query():
@@ -43,7 +43,7 @@ def weather_query():
             context = "Here is some context from earlier sessions:\n" + "\n".join(context_lines) + "\n"
         
         # === Step 3: Build prompt with context add sentiment value===
-        final_prompt = context + query + f"\nSentiment score: {sentiment:.2f}\n"
+        final_prompt =f"\nSentiment score: {sentiment:.2f}\n"+ context + query
         
         # === Step 4: Get the response from the weather agent ===
         response = agent.process_weather_query(final_prompt)
