@@ -1,219 +1,449 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Chat App</title>
-    <!-- Tailwind CSS CDN -->
+    <link rel="stylesheet" href="https://cdn.tailwindcss.com">
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* Custom animations and styles */
-        .fade-in {
-            animation: fadeIn 0.5s ease-in-out;
-        }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .chat-container {
-            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
-        }
-        .message-bubble {
-            max-width: 70%;
-            word-wrap: break-word;
-        }
-        .mic-active {
-            color: #ff4d4f;
-            animation: pulse 1s infinite;
+        .message { animation: fadeIn 0.5s ease-out; }
+        .recording { background-color: #ef4444 !important; animation: pulse 1s infinite; }
+        .active-chat { background-color: #374151 !important; border-left: 4px solid #3b82f6; }
+        .thinking-dots::after {
+            content: '';
+            animation: thinking 1.5s infinite;
         }
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes thinking {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+        .thinking-bubble {
+            background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-white font-sans h-screen flex flex-col">
-    <div class="chat-container flex-1 flex flex-col p-4 overflow-hidden">
-        <!-- Header -->
-        <div class="flex items-center justify-between p-4 border-b border-gray-700">
-            <h1 class="text-xl font-bold">Weather Chat</h1>
-            <button id="clearChat" class="text-sm text-gray-400 hover:text-white">
-                Clear Chat <i class="fas fa-trash ml-1"></i>
-            </button>
+<body class="bg-gray-100 flex h-screen">
+    <!-- Sidebar for chat list -->
+    <div class="w-1/4 bg-gray-800 text-white p-4 overflow-y-auto">
+        <h2 class="text-xl font-bold mb-4">Chats</h2>
+        <button id="new-chat" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-4 w-full">New Chat</button>
+        <ul id="chat-list" class="space-y-2"></ul>
+    </div>
+    <!-- Main chat area -->
+    <div class="flex-1 flex flex-col">
+        <div id="chat-header" class="bg-white p-4 shadow-md flex justify-between items-center">
+            <h1 class="text-2xl font-bold">Weather Chat</h1>
+            <button id="clear-chat" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">Clear Chat</button>
         </div>
-
-        <!-- Chat Messages -->
-        <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-4">
-            <!-- Messages will be appended here -->
-        </div>
-
-        <!-- Input Area -->
-        <div class="p-4 border-t border-gray-700 flex items-center space-x-3">
-            <input 
-                id="chatInput" 
-                type="text" 
-                placeholder="Ask about the weather..." 
-                class="flex-1 bg-gray-800 text-white p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-            <button id="micButton" class="text-gray-400 hover:text-white">
-                <i class="fas fa-microphone text-xl"></i>
-            </button>
-            <button id="sendButton" class="bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg">
-                <i class="fas fa-paper-plane"></i>
-            </button>
+        <div id="chat-container" class="flex-1 overflow-y-auto p-4 bg-white"></div>
+        <div class="bg-white p-4 border-t">
+            <div id="chat-form" class="flex">
+                <button id="voice-input" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded mr-2" title="Click to speak">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <input type="text" id="user-input" class="flex-1 border rounded px-4 py-2" placeholder="Ask about weather or use voice input..." onkeypress="handleEnter(event)">
+                <button id="send-btn" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded ml-2">Send</button>
+            </div>
+            <div id="status" class="mt-2 text-sm text-gray-600"></div>
         </div>
     </div>
-
     <script>
-        // Check for browser support
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        const recognition = SpeechRecognition ? new SpeechRecognition() : null;
+        // Configuration
+        const BASE_URL = 'http://192.168.68.107:5000';
+        let currentChatId = null;
+        const userId = 'default_user';
+        let recognition = null;
+        let isRecording = false;
 
-        // User ID
-        const userId = "default_user"; // Replace with actual user ID logic
-
-        // Elements
-        const chatMessages = document.getElementById('chatMessages');
-        const chatInput = document.getElementById('chatInput');
-        const sendButton = document.getElementById('sendButton');
-        const micButton = document.getElementById('micButton');
-        const clearChatButton = document.getElementById('clearChat');
-
-        // Load previous sessions on page load
-        window.onload = () => {
-            fetchSessions();
-        };
-
-        // Fetch previous sessions
-        async function fetchSessions() {
-            try {
-                const response = await fetch(`http://192.168.68.107:5000/sessions/${userId}`);
-                const data = await response.json();
-                // Sort sessions by timestamp in ascending order
-                data.sessions.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-                if (data.sessions) {
-                    data.sessions.forEach(session => {
-                        if (session.query && session.response) {
-                            addMessage(session.query, 'user');
-                            addMessage(session.response, 'bot', true);
-                        }
-                    });
-                }
-            } catch (error) {
-                console.error('Error fetching sessions:', error);
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = true;
+                recognition.lang = 'en-US';
+                
+                recognition.onstart = () => {
+                    isRecording = true;
+                    document.getElementById('voice-input').classList.add('recording');
+                    updateStatus('Listening... Speak now!');
+                };
+                
+                recognition.onresult = (event) => {
+                    let transcript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        transcript += event.results[i][0].transcript;
+                    }
+                    document.getElementById('user-input').value = transcript;
+                    
+                    if (event.results[event.results.length - 1].isFinal) {
+                        updateStatus('Speech recognized successfully!');
+                        setTimeout(() => updateStatus(''), 2000);
+                    }
+                };
+                
+                recognition.onend = () => {
+                    isRecording = false;
+                    document.getElementById('voice-input').classList.remove('recording');
+                };
+                
+                recognition.onerror = (event) => {
+                    console.error('Speech recognition error:', event.error);
+                    isRecording = false;
+                    document.getElementById('voice-input').classList.remove('recording');
+                    updateStatus(`Speech recognition error: ${event.error}`);
+                    setTimeout(() => updateStatus(''), 3000);
+                };
+            } else {
+                console.warn('Speech recognition not supported');
             }
         }
 
-        // Add message to chat
-        function addMessage(text, sender, hasPlayButton = false) {
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `flex ${sender === 'user' ? 'justify-end' : 'justify-start'} mb-4 fade-in`;
-            
-            const bubble = document.createElement('div');
-            bubble.className = `message-bubble p-3 rounded-lg ${
-                sender === 'user' ? 'bg-blue-600 text-white' : 'bg-gray-700 text-white'
-            }`;
-            bubble.textContent = text;
-
-            if (hasPlayButton) {
-                const playButton = document.createElement('button');
-                playButton.className = 'ml-2 text-gray-400 hover:text-white';
-                playButton.innerHTML = '<i class="fas fa-play"></i>';
-                playButton.onclick = () => speak(text);
-                bubble.appendChild(playButton);
-            }
-
-            messageDiv.appendChild(bubble);
-            chatMessages.appendChild(messageDiv);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
         }
 
-        // Send message to backend
-        async function sendMessage(query) {
-            if (!query.trim()) return;
+        function handleEnter(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
 
-            addMessage(query, 'user');
-            chatInput.value = '';
-
+        async function makeRequest(url, options = {}) {
             try {
-                const response = await fetch('http://192.168.68.107:5000/weather', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ query, user_id: userId })
+                const response = await fetch(`${BASE_URL}${url}`, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
                 });
-                console.log('Response:', response); // Debug response
+                
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                const data = await response.json();
-                if (data.response) {
-                    addMessage(data.response, 'bot', true);
+                
+                return await response.json();
+            } catch (error) {
+                console.error('Request failed:', error);
+                updateStatus(`Error: ${error.message}`);
+                throw error;
+            }
+        }
+
+        async function loadChats() {
+            try {
+                const data = await makeRequest(`/chats/${userId}`);
+                const chatList = document.getElementById('chat-list');
+                chatList.innerHTML = '';
+                
+                if (data.chats && data.chats.length > 0) {
+                    data.chats.forEach(chat => {
+                        const li = document.createElement('li');
+                        li.textContent = chat.title;
+                        li.classList.add('cursor-pointer', 'hover:bg-gray-700', 'p-2', 'rounded', 'transition-colors');
+                        li.setAttribute('data-chat-id', chat.chat_id);
+                        li.addEventListener('click', () => loadChat(chat.chat_id));
+                        
+                        // Highlight if this is the current chat
+                        if (chat.chat_id === currentChatId) {
+                            li.classList.add('active-chat');
+                        }
+                        
+                        chatList.appendChild(li);
+                    });
                 } else {
-                    addMessage('Sorry, something went wrong.', 'bot', true);
+                    const li = document.createElement('li');
+                    li.textContent = 'No chats yet. Create a new chat!';
+                    li.classList.add('p-2', 'text-gray-400');
+                    chatList.appendChild(li);
                 }
             } catch (error) {
-                addMessage('Error connecting to server.', 'bot', true);
-                console.error('Error:', error);
+                updateStatus('Failed to load chats');
             }
         }
 
-        // Handle send button click
-        sendButton.addEventListener('click', () => {
-            const query = chatInput.value;
-            sendMessage(query);
-        });
-
-        // Handle Enter key press
-        chatInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendMessage(chatInput.value);
-            }
-        });
-
-        // Voice input handling
-        if (recognition) {
-            recognition.lang = 'en-US';
-            recognition.interimResults = false;
-
-            micButton.addEventListener('click', () => {
-                recognition.start();
-                micButton.classList.add('mic-active');
+        function highlightActiveChat(chatId) {
+            // Remove active class from all chats
+            document.querySelectorAll('#chat-list li').forEach(li => {
+                li.classList.remove('active-chat');
             });
-
-            recognition.onresult = (event) => {
-                const transcript = event.results[0][0].transcript;
-                chatInput.value = transcript;
-                sendMessage(transcript);
-            };
-
-            recognition.onend = () => {
-                micButton.classList.remove('mic-active');
-            };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-                micButton.classList.remove('mic-active');
-                addMessage('Sorry, I couldn’t hear you. Please try again.', 'bot', true);
-            };
-        } else {
-            micButton.style.display = 'none';
-            console.warn('Speech recognition not supported in this browser.');
+            
+            // Add active class to current chat
+            const activeChat = document.querySelector(`#chat-list li[data-chat-id="${chatId}"]`);
+            if (activeChat) {
+                activeChat.classList.add('active-chat');
+            }
         }
 
-        // Text-to-speech for responses
-        function speak(text) {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = 'en-US';
-            utterance.rate = 1;
-            window.speechSynthesis.speak(utterance);
+        async function loadChat(chatId) {
+            try {
+                currentChatId = chatId;
+                highlightActiveChat(chatId);
+                
+                const data = await makeRequest(`/chat/${chatId}/messages`);
+                const chatContainer = document.getElementById('chat-container');
+                chatContainer.innerHTML = '';
+                
+                if (data.messages && data.messages.length > 0) {
+                    // Sort messages by timestamp
+                    data.messages.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+                    
+                    data.messages.forEach(msg => {
+                        // User message
+                        const userDiv = document.createElement('div');
+                        userDiv.className = 'message mb-2 p-3 bg-blue-100 rounded-lg';
+                        userDiv.innerHTML = `<strong class="text-blue-800">You:</strong> <span class="text-gray-800">${escapeHtml(msg.query)}</span>`;
+                        chatContainer.appendChild(userDiv);
+                        
+                        // Agent response
+                        const agentDiv = document.createElement('div');
+                        agentDiv.className = 'message mb-2 p-3 bg-green-100 rounded-lg';
+                        const responseId = `response-${Date.now()}-${Math.random()}`;
+                        agentDiv.innerHTML = `
+                            <strong class="text-green-800">Agent:</strong> 
+                            <span class="text-gray-800">${escapeHtml(msg.response)}</span>
+                            <button class="play-btn bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded ml-2 text-xs" 
+                                    data-text="${escapeHtml(msg.response)}" 
+                                    title="Play response">
+                                <i class="fas fa-play"></i>
+                            </button>
+                        `;
+                        chatContainer.appendChild(agentDiv);
+                    });
+                } else {
+                    chatContainer.innerHTML = '<div class="text-gray-500 text-center py-8">No messages yet. Start the conversation!</div>';
+                }
+                
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                updateStatus('Chat loaded successfully');
+                setTimeout(() => updateStatus(''), 2000);
+            } catch (error) {
+                updateStatus('Failed to load chat messages');
+            }
         }
 
-        // Clear chat
-        clearChatButton.addEventListener('click', () => {
-            chatMessages.innerHTML = '';
+        async function sendMessage() {
+            const query = document.getElementById('user-input').value.trim();
+            if (!query) {
+                updateStatus('Please type a message');
+                setTimeout(() => updateStatus(''), 2000);
+                return;
+            }
+            
+            if (!currentChatId) {
+                updateStatus('Please select a chat or create a new one');
+                setTimeout(() => updateStatus(''), 2000);
+                return;
+            }
+
+            // Disable send button temporarily
+            const sendBtn = document.getElementById('send-btn');
+            const originalText = sendBtn.textContent;
+            sendBtn.disabled = true;
+            sendBtn.textContent = 'Sending...';
+
+            // Get chat container reference
+            const chatContainer = document.getElementById('chat-container');
+
+            try {
+                // Add user message to chat immediately
+                const userDiv = document.createElement('div');
+                userDiv.className = 'message mb-2 p-3 bg-blue-100 rounded-lg';
+                userDiv.innerHTML = `<strong class="text-blue-800">You:</strong> <span class="text-gray-800">${escapeHtml(query)}</span>`;
+                chatContainer.appendChild(userDiv);
+
+                // Add thinking indicator
+                const thinkingDiv = document.createElement('div');
+                thinkingDiv.className = 'message mb-2 p-3 thinking-bubble rounded-lg';
+                thinkingDiv.id = 'thinking-indicator';
+                thinkingDiv.innerHTML = `
+                    <strong class="text-green-800">Agent:</strong> 
+                    <span class="text-gray-600 thinking-dots">Thinking</span>
+                    <i class="fas fa-brain ml-2 text-green-600"></i>
+                `;
+                chatContainer.appendChild(thinkingDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+
+                // Clear input
+                document.getElementById('user-input').value = '';
+                
+                // Send request to backend
+                const data = await makeRequest('/weather', {
+                    method: 'POST',
+                    body: JSON.stringify({ 
+                        query: query, 
+                        chat_id: currentChatId, 
+                        user_id: userId 
+                    })
+                });
+
+                // Remove thinking indicator
+                const thinkingIndicator = document.getElementById('thinking-indicator');
+                if (thinkingIndicator) {
+                    thinkingIndicator.remove();
+                }
+
+                // Add agent response
+                const agentDiv = document.createElement('div');
+                agentDiv.className = 'message mb-2 p-3 bg-green-100 rounded-lg';
+                agentDiv.innerHTML = `
+                    <strong class="text-green-800">Agent:</strong> 
+                    <span class="text-gray-800">${escapeHtml(data.response)}</span>
+                    <button class="play-btn bg-green-500 hover:bg-green-700 text-white font-bold py-1 px-2 rounded ml-2 text-xs" 
+                            data-text="${escapeHtml(data.response)}" 
+                            title="Play response">
+                        <i class="fas fa-play"></i>
+                    </button>
+                `;
+                chatContainer.appendChild(agentDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                updateStatus('Message sent successfully');
+                setTimeout(() => updateStatus(''), 2000);
+                
+            } catch (error) {
+                // Remove thinking indicator on error
+                const thinkingIndicator = document.getElementById('thinking-indicator');
+                if (thinkingIndicator) {
+                    thinkingIndicator.remove();
+                }
+                
+                // Add error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'message mb-2 p-3 bg-red-100 rounded-lg';
+                errorDiv.innerHTML = `
+                    <strong class="text-red-800">Error:</strong> 
+                    <span class="text-gray-800">Failed to get response. Please try again.</span>
+                `;
+                chatContainer.appendChild(errorDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                
+                updateStatus('Failed to send message');
+                console.error('Send message error:', error);
+            } finally {
+                // Re-enable send button
+                sendBtn.disabled = false;
+                sendBtn.textContent = originalText;
+            }
+        }
+
+        function playText(text) {
+            if ('speechSynthesis' in window) {
+                // Stop any ongoing speech
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                
+                utterance.onstart = () => {
+                    updateStatus('Playing audio...');
+                };
+                
+                utterance.onend = () => {
+                    updateStatus('');
+                };
+                
+                utterance.onerror = (event) => {
+                    console.error('Speech synthesis error:', event.error);
+                    updateStatus('Audio playback error');
+                    setTimeout(() => updateStatus(''), 2000);
+                };
+                
+                window.speechSynthesis.speak(utterance);
+            } else {
+                updateStatus('Text-to-speech not supported in this browser');
+                setTimeout(() => updateStatus(''), 2000);
+            }
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Event listeners
+        document.getElementById('new-chat').addEventListener('click', async () => {
+            try {
+                updateStatus('Creating new chat...');
+                const data = await makeRequest('/create_chat', {
+                    method: 'POST',
+                    body: JSON.stringify({ user_id: userId })
+                });
+                
+                await loadChats();
+                loadChat(data.chat_id);
+                updateStatus('New chat created');
+                setTimeout(() => updateStatus(''), 2000);
+            } catch (error) {
+                updateStatus('Failed to create new chat');
+            }
+        });
+
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+
+        document.getElementById('voice-input').addEventListener('click', () => {
+            if (!recognition) {
+                updateStatus('Speech recognition not supported in this browser');
+                setTimeout(() => updateStatus(''), 2000);
+                return;
+            }
+            
+            if (isRecording) {
+                recognition.stop();
+            } else {
+                recognition.start();
+            }
+        });
+
+        // Event delegation for play buttons
+        document.getElementById('chat-container').addEventListener('click', (event) => {
+            if (event.target.classList.contains('play-btn') || event.target.closest('.play-btn')) {
+                const button = event.target.classList.contains('play-btn') ? event.target : event.target.closest('.play-btn');
+                const text = button.getAttribute('data-text');
+                if (text) {
+                    playText(text);
+                }
+            }
+        });
+
+        document.getElementById('clear-chat').addEventListener('click', () => {
+            if (currentChatId && confirm('Are you sure you want to clear this chat display? (This only clears the display, not the saved messages)')) {
+                document.getElementById('chat-container').innerHTML = '<div class="text-gray-500 text-center py-8">Chat cleared. Refresh to reload messages.</div>';
+            }
+        });
+
+        // Initialize everything
+        window.addEventListener('load', () => {
+            initSpeechRecognition();
+            loadChats();
+            updateStatus('Ready! Create a new chat or select an existing one.');
+            setTimeout(() => updateStatus(''), 3000);
         });
     </script>
 </body>
