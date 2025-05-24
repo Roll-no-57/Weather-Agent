@@ -1,6 +1,14 @@
 from flask import Flask, request, jsonify
 from textblob import TextBlob
-from database import create_chat_index, store_query_response, fetch_similar_query_responses, fetch_chat_messages
+from database import (
+    create_chat_index, 
+    store_query_response, 
+    fetch_similar_query_responses, 
+    fetch_chat_messages,
+    store_chat_metadata,
+    fetch_user_chats,
+    delete_chat
+)
 from weather_main import WeatherAgent
 from flask_cors import CORS
 import uuid
@@ -10,21 +18,24 @@ CORS(app)
 
 agent = WeatherAgent(model="gemini-1.5-flash")
 
-# In-memory chat list (replace with a database in production)
-user_chats = {}
-
 @app.route('/create_chat', methods=['POST'])
 def create_chat():
     data = request.json
     user_id = data.get('user_id', 'default_user')
     chat_id = str(uuid.uuid4())
+    title = data.get('title')  # Optional custom title
+    
+    # Create the chat index in Pinecone
     index_name = create_chat_index(chat_id)
     
-    if user_id not in user_chats:
-        user_chats[user_id] = []
-    user_chats[user_id].append({"chat_id": chat_id, "title": f"Chat {len(user_chats[user_id]) + 1}"})
+    # Store chat metadata in the database
+    metadata_id = store_chat_metadata(user_id, chat_id, title)
     
-    return jsonify({"chat_id": chat_id, "index_name": index_name})
+    return jsonify({
+        "chat_id": chat_id, 
+        "index_name": index_name,
+        "metadata_id": metadata_id
+    })
 
 @app.route('/weather', methods=['POST'])
 def weather_query():
@@ -53,7 +64,8 @@ def weather_query():
         
         fallback_keywords = ["sorry", "I couldn't", "error", "please try again"]
         if not any(keyword in response.lower() for keyword in fallback_keywords):
-            message_id = store_query_response(chat_id, query, response)
+            # Pass user_id to update chat activity
+            message_id = store_query_response(chat_id, query, response, user_id)
         else:
             message_id = None
         
@@ -67,16 +79,44 @@ def weather_query():
 
 @app.route('/chats/<user_id>', methods=['GET'])
 def get_chats(user_id):
-    chats = user_chats.get(user_id, [])
-    return jsonify({"chats": chats})
+    """Get all chats for a user from the database."""
+    try:
+        chats = fetch_user_chats(user_id)
+        return jsonify({"chats": chats})
+    except Exception as e:
+        return jsonify({"error": f"Error fetching chats: {str(e)}"}), 500
 
 @app.route('/chat/<chat_id>/messages', methods=['GET'])
 def get_chat_messages(chat_id):
+    """Get all messages for a specific chat."""
     try:
         messages = fetch_chat_messages(chat_id)
         return jsonify({"messages": messages})
     except Exception as e:
         return jsonify({"error": f"Error fetching messages: {str(e)}"}), 500
+
+@app.route('/chat/<chat_id>', methods=['DELETE'])
+def delete_chat_endpoint(chat_id):
+    """Delete a chat and all its messages."""
+    data = request.json
+    user_id = data.get('user_id')
+    
+    if not user_id:
+        return jsonify({"error": "user_id is required"}), 400
+    
+    try:
+        success = delete_chat(user_id, chat_id)
+        if success:
+            return jsonify({"message": "Chat deleted successfully"})
+        else:
+            return jsonify({"error": "Failed to delete chat"}), 500
+    except Exception as e:
+        return jsonify({"error": f"Error deleting chat: {str(e)}"}), 500
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    """Health check endpoint."""
+    return jsonify({"status": "healthy"})
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=5000)
