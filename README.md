@@ -5,9 +5,6 @@ A sophisticated AI-powered weather assistant that answers complex weather querie
 
 ![App Image](image.png)
 
-## Presentation
-[Watch the presentation](https://drive.google.com/file/d/1D0lFY3CoaEJj4QFOPIxzcFxbgoUPwYbZ/view?usp=sharing)
-
 
 ## ✨ Features
 
