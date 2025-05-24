@@ -29,7 +29,7 @@ A sophisticated AI-powered weather assistant that answers complex weather querie
 - **Frontend**: HTML, CSS, JavaScript, Web Speech API (for voice input/output)
 - **APIs and Services**:
   - Open-Meteo API for weather data
-  - Grok AI for natural language processing
+  - google gemini 1.5 flash AI for natural language processing
   - Pinecone for vector-based query storage, retrieval, and chat context management
 - **Environment**: Python 3.8+
 
@@ -37,7 +37,7 @@ A sophisticated AI-powered weather assistant that answers complex weather querie
 
 - Python 3.8 or higher
 - pip (Python package manager)
-- A valid **GROQ_API_KEY** for Grok AI
+- A valid **GEMINI_API_KEY** for gemini AI
 - A valid **PINECONE_API_KEY** for Pinecone vector storage
 - Internet connection for API access
 - A modern browser with Web Speech API support (e.g., Chrome, Edge) for voice features
@@ -52,7 +52,7 @@ A sophisticated AI-powered weather assistant that answers complex weather querie
 2. **Set Up Environment Variables**:
    Create a `.env` file in the root directory and add the following:
    ```plaintext
-   GROQ_API_KEY=your-grok-api-key
+   GEMINI_API_KEY=your-gemini-api-key
    PINECONE_API_KEY=your-pinecone-api-key
    PINECONE_ENVIRONMENT=us-east-1
    ```
