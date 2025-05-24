@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+env/
+venv/
+.cache/
+.git/
+*.csv
+*.zip
+*.tar
+*.gz
+README.md
+image.png
