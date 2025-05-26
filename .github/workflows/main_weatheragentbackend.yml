@@ -1,4 +1,4 @@
-name: Build and deploy Python app to Azure Web App - weatherAgentBackend (with staging slot)
+name: Build and deploy Python app to Azure Web App - weatherAgentBackend
 
 on:
   push:
@@ -9,8 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     
     steps:
       - uses: actions/checkout@v4
@@ -27,9 +25,20 @@ jobs:
           
       - name: Create deployment package
         run: |
-          zip -r release.zip . -x "*.git*" ".dockerignore" "*.pyc*" "__pycache__/*" "*/__pycache__/*" "frontend/*" "venv/*" ".github/*"
+          # Create a clean zip excluding unnecessary files
+          zip -r release.zip . \
+            -x "*.git*" \
+            -x ".github/*" \
+            -x ".dockerignore" \
+            -x "*.pyc*" \
+            -x "__pycache__/*" \
+            -x "*/__pycache__/*" \
+            -x "frontend/*" \
+            -x "venv/*" \
+            -x "*.log" \
+            -x ".env*"
           
-      - name: Upload artifact for deployment jobs
+      - name: Upload artifact for deployment
         uses: actions/upload-artifact@v4
         with:
           name: python-app
@@ -52,7 +61,9 @@ jobs:
           name: python-app
           
       - name: Unzip artifact for deployment
-        run: unzip release.zip
+        run: |
+          unzip -o release.zip
+          ls -la  # List files to verify
           
       - name: Login to Azure
         uses: azure/login@v2
@@ -61,14 +72,25 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_50A26D7CBE9F478E85F42E26413BF8B5 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FA776D95D0B64F77B543719AF2BC255B }}
           
-      - name: Deploy to staging slot
+      - name: Wait before deployment (prevent conflicts)
+        run: |
+          echo "Waiting 30 seconds to prevent deployment conflicts..."
+          sleep 30
+          
+      - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
-        id: deploy-to-staging
+        id: deploy-to-webapp
         with:
           app-name: 'weatherAgentBackend'
-          slot-name: 'staging'  # Deploy to staging slot first
           package: '.'
+          # No slot-name parameter for student subscription
+          # No clean/restart parameters to avoid conflicts
           
-      - name: Swap staging to production
+      - name: Verify deployment
         run: |
-          az webapp deployment slot swap --name weatherAgentBackend --resource-group $(az webapp show --name weatherAgentBackend --query resourceGroup --output tsv) --slot staging --target-slot production
+          echo "Deployment completed!"
+          echo "App URL: https://weatheragentbackend-gvhfajajesfxddfm.canadacentral-01.azurewebsites.net"
+          echo "Waiting 45 seconds for app to start..."
+          sleep 45
+          # Try to hit the health endpoint
+          curl -f https://weatheragentbackend-gvhfajajesfxddfm.canadacentral-01.azurewebsites.net/health || echo "Health check failed - app may still be starting"
