@@ -90,22 +90,9 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_9699EC7F418E4BF0BF98121DEF71629E }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_04930C0289194405AE8043E2EDD6C89B }}
 
-      - name: Stop Azure Web App
-        run: |
-          az webapp stop --name WeatherAgentBackend --resource-group $(az webapp show --name WeatherAgentBackend --query resourceGroup -o tsv)
-        continue-on-error: true
-
       - name: 'Deploy to Azure Web App'
         uses: azure/webapps-deploy@v3
         id: deploy-to-webapp
         with:
           app-name: 'WeatherAgentBackend'
           slot-name: 'Production'
-          timeout: 600000  # 10 minutes timeout
-          restart: true
-          clean: true
-
-      - name: Start Azure Web App
-        run: |
-          az webapp start --name WeatherAgentBackend --resource-group $(az webapp show --name WeatherAgentBackend --query resourceGroup -o tsv)
-        if: always()`
