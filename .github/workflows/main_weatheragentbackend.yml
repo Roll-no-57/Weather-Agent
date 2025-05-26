@@ -31,8 +31,8 @@ jobs:
 
       - name: Zip artifact for deployment
         run: |
-          # Zip only necessary backend files
-          zip -r release.zip . -x "*.git*" "*.pyc*" "__pycache__/*" "Frontend/*" "venv/*"
+          # Zip only necessary backend files, exclude all __pycache__ directories
+          zip -r release.zip . -x "*.git*" ".dockerignore" "*.pyc*" "__pycache__/*" "*/__pycache__/*" "frontend/*" "venv/*"
           # Ensure app.py and requirements.txt are included
 
       - name: Upload artifact for deployment jobs
