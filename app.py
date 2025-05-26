@@ -12,6 +12,7 @@ from database import (
 from weather_main import WeatherAgent
 from flask_cors import CORS
 import uuid
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -118,5 +119,6 @@ def health_check():
     """Health check endpoint."""
     return jsonify({"status": "healthy"})
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+if __name__ == "__main__":
+    port = int(os.environ.get('PORT', 5000))  # Use Azure's PORT or default to 5000
+    app.run(debug=True, host='0.0.0.0', port=port)
