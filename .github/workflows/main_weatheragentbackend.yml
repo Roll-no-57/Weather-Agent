@@ -1,8 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-# More info on Python, GitHub Actions, and Azure App Service: https://aka.ms/python-webapps-actions
-
-name: Build and deploy Python app to Azure Web App - weatherAgentBackend
+name: Build and deploy Python app to Azure Web App - weatherAgentBackend (with staging slot)
 
 on:
   push:
@@ -14,27 +10,25 @@ jobs:
   build:
     runs-on: ubuntu-latest
     permissions:
-      contents: read # Required for actions/checkout
-
+      contents: read
+    
     steps:
       - uses: actions/checkout@v4
-
+      
       - name: Set up Python version
         uses: actions/setup-python@v5
         with:
-          python-version: '3.9' # Adjust based on your requirements.txt and Azure support
-
+          python-version: '3.9'
+          
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-
-      - name: Zip artifact for deployment
+          
+      - name: Create deployment package
         run: |
-          # Zip only necessary backend files, exclude all __pycache__ directories
-          zip -r release.zip . -x "*.git*" ".dockerignore" "*.pyc*" "__pycache__/*" "*/__pycache__/*" "frontend/*" "venv/*"
-          # Ensure app.py and requirements.txt are included
-
+          zip -r release.zip . -x "*.git*" ".dockerignore" "*.pyc*" "__pycache__/*" "*/__pycache__/*" "frontend/*" "venv/*" ".github/*"
+          
       - name: Upload artifact for deployment jobs
         uses: actions/upload-artifact@v4
         with:
@@ -48,30 +42,33 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write # Required for requesting the JWT
-      contents: read # Required for actions/checkout
-
+      id-token: write
+      contents: read
+      
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
           name: python-app
-
+          
       - name: Unzip artifact for deployment
-        run: unzip release.zip -d ./deployed_app
-
+        run: unzip release.zip
+          
       - name: Login to Azure
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FC21908EFFDF4AD0AD7517282E2AC2D3 }}
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_50A26D7CBE9F478E85F42E26413BF8B5 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_FA776D95D0B64F77B543719AF2BC255B }}
-
-      - name: 'Deploy to Azure Web App'
+          
+      - name: Deploy to staging slot
         uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
+        id: deploy-to-staging
         with:
           app-name: 'weatherAgentBackend'
-          slot-name: 'Production'
-          package: './deployed_app' # Directory with unzipped files
-          startup-command: 'python app.py' # Specify the run command
+          slot-name: 'staging'  # Deploy to staging slot first
+          package: '.'
+          
+      - name: Swap staging to production
+        run: |
+          az webapp deployment slot swap --name weatherAgentBackend --resource-group $(az webapp show --name weatherAgentBackend --query resourceGroup --output tsv) --slot staging --target-slot production
